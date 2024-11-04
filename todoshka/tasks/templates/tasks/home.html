@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+{% extends 'tasks/base.html' %}
+{% block content %}
+
+    <nav class="navbar topbar navbar-inverse static-top navbar-dark navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Todoshka</a>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item topbar-item active">
+                        <a class="nav-link" aria-current="page" href="#">Home</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div id="app" class="col-12">
+        {% verbatim %}
+
+        <div class="row tasks-columns mb 6 py-2 px-4">
+
+            <div class="tasks-column col-lg-4 col-md-6 daily">
+                <div class="d-flex align-items-center justify-content-sm-between">
+                    <h2 class="column-title">Tasks</h2>
+                    <button type="button" @click="openModal('task')" class="custom-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="#000000"
+                             class="bi bi-plus-square" viewBox="0 0 16 16">
+                            <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"></path>
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="tasks-list">
+                    <div v-for="task in filteredTasksByType('task')" :key="task.id" class="task-item">
+                        <div class="task-checkbox-container">
+                            <input type="checkbox" v-model="task.completed"
+                                   @change="updateTaskStatus(task.id, task.completed)">
+                        </div>
+                        <div class="task-content">
+                            <div class="task-main-content d-flex align-items-center justify-content-sm-between">
+                                <div class="width-100" @click="openEditModal(task)">
+                                    <div class="task-name">{{ task.name }}</div>
+                                    <div class="task-desc small-text">{{ task.description }}</div>
+                                </div>
+                                <div class="d-flex align-items-end height-100">
+
+                                    <button type="button" @click="openModal('subtask',task.id)" class="custom-btn">
+
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                             fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
+                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="task-sub-content mt-1">
+                                <div v-for="sub in getSubtasks(task.id)" class="sub-item">
+                                    <div class="mx-1">
+                                        <input type="checkbox" v-model="sub.completed"
+                                               @change="updateTaskStatus(sub.id, sub.completed)">
+                                    </div>
+                                    <div class="task-name medium-text" @click="openEditModal(sub)">{{ sub.name }}</div>
+
+                                </div>
+                            </div>
+                            <div class="task-secondary-content d-flex justify-content-end">
+                                <div v-if="task.parent_task" class="task-due-date small-text text-right me-1">
+                                    {{ task.parent_task_name }}
+                                </div>
+                                <div v-if="task.due_date" class="task-due-date small-text text-right">
+                                    {{ formatDueDate(task.due_date,task.has_time) }}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="tasks-column col-lg-4 col-md-6 daily">
+                <div class="d-flex align-items-center justify-content-sm-between">
+                    <h2 class="column-title">SubTasks</h2>
+                    <button type="button" @click="openModal('subtask')" class="custom-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="#000000"
+                             class="bi bi-plus-square" viewBox="0 0 16 16">
+                            <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"></path>
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"></path>
+                        </svg>
+
+                    </button>
+
+                </div>
+                <div class="subtasks-list">
+                    <div v-for="task in filteredTasksByType('subtask')" :key="task.id" class="task-item">
+                        <div class="task-checkbox-container">
+                            <input type="checkbox" v-model="task.completed"
+                                   @change="updateTaskStatus(task.id, task.completed)">
+                        </div>
+                        <div class="task-content">
+                            <div class="task-main-content d-flex align-items-center justify-content-sm-between">
+                                <div class="width-100" @click="openEditModal(task)">
+                                    <div class="task-name">{{ task.name }}</div>
+                                    <div class="task-desc small-text">{{ task.description }}</div>
+                                </div>
+                            </div>
+                            <div class="task-secondary-content d-flex justify-content-end">
+                                <div v-if="task.parent_task" class="task-due-date small-text text-right me-1">
+                                    {{ task.parent_task_name }}
+                                </div>
+                                <div v-if="task.due_date" class="task-due-date small-text text-right">
+                                    {{ formatDueDate(task.due_date,task.has_time) }}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+
+            <div class="tasks-column col-lg-4 col-md-6 daily">
+                <div class="d-flex align-items-center justify-content-sm-between">
+                    <h2 class="column-title">Projects</h2>
+                    <button type="button" @click="openModal('project')" class="custom-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="#000000"
+                             class="bi bi-plus-square" viewBox="0 0 16 16">
+                            <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"></path>
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="projects-list">
+                    <div v-for="task in filteredTasksByType('project')" :key="task.id" class="task-item">
+                        <div class="task-checkbox-container">
+                            <input type="checkbox" v-model="task.completed"
+                                   @change="updateTaskStatus(task.id, task.completed)">
+                        </div>
+                        <div class="task-content">
+                            <div class="task-main-content d-flex align-items-center justify-content-sm-between">
+                                <div class="width-100" @click="openEditModal(task)">
+                                    <div class="task-name">{{ task.name }}</div>
+                                    <div class="task-desc small-text">{{ task.description }}</div>
+                                </div>
+                                <div class="d-flex align-items-end height-100">
+
+                                    <button type="button" @click="openModal('task',task.id)" class="custom-btn">
+
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                             fill="currentColor" class="bi bi-plus" viewBox="0 0 16 16">
+                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="task-sub-content mt-1">
+                                <div v-for="sub in getSubtasks(task.id)" class="sub-item">
+                                    <div class="mx-1">
+                                        <input type="checkbox" v-model="sub.completed"
+                                               @change="updateTaskStatus(sub.id, sub.completed)">
+                                    </div>
+                                    <div class="task-name medium-text" @click="openEditModal(sub)">{{ sub.name }}</div>
+
+                                </div>
+                            </div>
+                            <div class="task-secondary-content d-flex justify-content-end">
+                                <div v-if="task.parent_task" class="task-due-date small-text text-right me-1">
+                                    {{ task.parent_task_name }}
+                                </div>
+                                <div v-if="task.due_date" class="task-due-date small-text text-right">
+                                    {{ formatDueDate(task.due_date,task.has_time) }}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div v-if="isModalOpen" class="modal-overlay">
+            <div class="modal-content">
+                <header>
+                    <div class="d-flex align-items-center justify-content-sm-between p-4">
+                        <h2>{{ editingTask ? 'Редактировать задачу' : 'Создать задачу' }}</h2>
+                        <span class="close" @click="closeModal">&times;</span>
+                    </div>
+                </header>
+                <div class="px-4">
+                    <form @submit.prevent="handleSubmit">
+                        <div class="mt-3">
+                            <div>
+                                <label for="task-name">Название задачи:</label>
+                            </div>
+                            <div>
+                                <input class="form-control" type="text" id="task-name" v-model="newTask.name"
+                                       required>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div>
+                                <label for="task-desc">Описание задачи:</label>
+                            </div>
+                            <div>
+                                <textarea class="form-control" id="task-desc" v-model="newTask.description"></textarea>
+                            </div>
+                        </div>
+
+
+                        <div class="mt-3">
+                            <div>
+                                <label for="task-date">Выберите дату:</label>
+
+                            </div>
+                            <div>
+                                <input type="date" id="task-date" v-model="newTask.date">
+                                <input type="time" id="task-time" v-model="newTask.time">
+
+                            </div>
+                        </div>
+
+
+                        <div class="task-modal-footer d-flex justify-content-sm-between align-items-center mt-5 mb-4">
+
+                            <button type="submit">Сохранить задачу</button>
+                            <button v-if="editingTask" type="button" @click="deleteTask">Удалить</button>
+
+                            <button type="button" @click="closeModal">Отмена</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endverbatim %}
+
+    </div>
+
+{% endblock content %}
