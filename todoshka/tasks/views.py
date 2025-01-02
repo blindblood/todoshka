@@ -17,6 +17,6 @@ class TaskViewSet(ModelViewSet):
     queryset = Task.objects.select_related('user', 'parent_task').all()
 
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
 
